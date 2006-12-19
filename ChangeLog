@@ -1,0 +1,105 @@
+
+=== version history for CPAN::Site
+
+WISH: install by distribution name/version not only package/version
+
+version 0.14: Tue Dec 19 13:42:48 CET 2006
+	- use oodist (from OODoc) to produce manual pages
+	- official new maintainer MARKOV
+	- first public release of rewrite.
+
+version 0.13:
+	- depend on HTTP::Date if server
+	- index generation code moved from bin/cpansite into
+	  lib/CPAN/Site/Index.pm
+	- Add CPANSITE_ROLE environment variable to Makefile.PL
+	- show version of cpansite when shell is started
+
+version 0.12:
+	- 01mailrc is removed when the core cpan is merged in, and
+	  created otherwise.
+
+version 0.11:
+	- use HTTP::Date to produce timestamp on package
+
+version 0.10:
+	- use functions
+	- variables in CAPS are reserved for Perl
+	- %VERSION and %PATH combined in %pkgs, which contains
+	  [$version,$path] entries
+	- only install details file after success
+	- command-line option parsing
+	- trace to STDOUT, new option verbose
+	- CPAN::Site is very useful, and therefore don't call it ALPHA
+	- regex to find version now accepts "our"
+	- renamed mkpackages to 'cpansite index'
+	- cpansite also can start shell and install modules
+	- do not ask for URL at installation, because different people
+	  may want different local archives: use environment variable
+	  CPANSITE.
+	- moved Site.pm to lib/CPAN
+
+2006-03-19  Ulrich Pfeifer  <upf@de.uu.net>
+
+	* mkpackages: applied patch from Matisse Enzer so that it uses
+	CPAN::Checksums to generate the CHECKSUMS files.  This probably
+	renders it useless for ancient per installations.  Even my debian
+	Perl 5.8 requires me to fetch these:
+
+	      Compress-Bzip2-2.09
+	      Compress-Zlib-1.41
+	      Data-Compare-0.13
+	      Text-Glob-0.06
+	      Number-Compare-0.01
+	      File-Find-Rule-0.28
+	      Digest-SHA-5.34
+	      CPAN-Checksums-1.039
+       
+	So fall back to the last version if that is too much hassle for
+	you.  I may think about a fall back mode if CPAN::Checksums is not
+	available.
+
+2005-09-18  Ulrich Pfeifer  <pfeifer@wait.de>
+
+	* Integrated patch from Matisse Enzer to generate .readme files.
+	* Switching from MD5 to Digest::MD5
+	* Gzip now called with the local file name $_.  $File::Find::name
+	should not have worked?
+
+1999-07-26  Ulrich Pfeifer  <upf@de.uu.net>
+
+	* Site.pm: Added CPAN::Config->load call which is required by
+	newer CPAN.pm
+
+Wed May  6 13:26:13 1998  Ulrich Pfeifer  <upf@de.uu.net>
+
+	* mkpackages: Rudimentary CHECKSUMS support
+
+Tue May  5 12:40:27 1998  Ulrich Pfeifer  <upf@de.uu.net>
+
+	* mkpackages (wanted): 'package' now found even if in the first
+ 	line of a file.
+
+Tue Mar  3 12:45:42 1998  Ulrich Pfeifer  <upf@de.uu.net>
+
+	* mkpackages (wanted): $VERSION is found now even if line crosses 
+	  block boundary.
+
+Tue Jan 13 11:58:31 1998  Ulrich Pfeifer  <pfeifer@wait.de>
+
+	* mkpackages: Now removes 'id/' from path
+
+Thu Jan  8 12:26:42 1998  Ulrich Pfeifer  <pfeifer@wait.de>
+
+	* Makefile.PL: Ask for default URL
+
+Wed Jan  7 20:15:54 1998  Ulrich Pfeifer  <pfeifer@wait.de>
+
+	* mkpackages (wanted): now parses tar files to extract package
+ 	names and version
+
+Revision history for Perl extension CPAN::Site.
+
+0.01  Wed Jan  7 14:32:47 1998
+	- original version; created by h2xs 1.18
+
