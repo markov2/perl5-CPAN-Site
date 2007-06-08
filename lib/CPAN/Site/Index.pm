@@ -88,6 +88,14 @@ sub cpan_index($@)
     {   IO::File->new("| $gzip_write >$mailrc")
            or die "ERROR: cannot create $mailrc: $!\n";
     }
+
+    # Create empty 03modlist
+    my $modlist    = "$mycpan/site/03modlist.data.gz";
+    print "create empty $modlist\n" if $verbose;
+    unless(-f $modlist)
+    {   IO::File->new("| $gzip_write >$modlist")
+           or die "ERROR: cannot create $modlist: $!\n";
+    }
 }
 
 #

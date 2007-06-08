@@ -29,7 +29,7 @@ my $last_time = 0;
 
 no warnings 'redefine';
 sub CPAN::Index::reload {
-   my($cl,$force) = @_;
+   my($cl, $force) = @_;
    my $time = time;
 
    # Need this code duplication since reload does not return something
@@ -43,18 +43,12 @@ sub CPAN::Index::reload {
 
    $last_time = $time;
 
-   my $needshort = $^O eq "dos";
-
    $reload_orig->(@_);
 
+   $cl->rd_authindex($cl->reload_x("site/01mailrc.txt.gz", '', $force));
    $cl->rd_modpacks(
-     $cl->reload_x( "site/02packages.details.txt.gz"
-                  , ($needshort ? "12packag.gz" : "")
-                  , $force));
-   $cl->rd_authindex(
-     $cl->reload_x( "site/01mailrc.txt.gz"
-                  , ($needshort ? "11mailrc.gz" : "")
-                  , $force));
+     $cl->reload_x("site/02packages.details.txt.gz", '', $force));
+   $cl->rd_modlist($cl->reload_x("site/03modlist.data.gz", '', $force));
 
    # CPAN Master overwrites?
    $reload_orig->(@_);

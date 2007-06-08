@@ -5,3 +5,4 @@ bin/cpansite
 bin/mkpackages
 lib/CPAN/Site.pm
 lib/CPAN/Site/Index.pm
+t/pod.t
