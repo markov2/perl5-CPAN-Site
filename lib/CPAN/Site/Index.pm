@@ -5,11 +5,13 @@ use strict;
 package CPAN::Site::Index;
 use base 'Exporter';
 our @EXPORT_OK = qw/cpan_index/;
+our $VERSION;  # required in test-env
 
+use version;
 use IO::File        ();
 use File::Find      qw/find/;
 use File::Copy      qw/copy move/;
-use File::Basename  qw/basename/;
+use File::Basename  qw/basename dirname/;
 use Net::FTP        ();
 use HTTP::Date      qw/time2str/;
 use File::Spec      ();
@@ -27,7 +29,8 @@ sub create_details($$$$);
 sub calculate_checksums($);
 sub collect_dists($$@);
 sub merge_core_cpan($$$);
-sub update_core_cpan($$);
+sub update_core_cpan($@);
+sub mkdirhier(@);
 
 sub cpan_index($@)
 {   my ($mycpan, %opts) = @_;
@@ -38,13 +41,13 @@ sub cpan_index($@)
     my $merge_with_core = length $bigcpan_url;
     my $lazy            = $opts{lazy};
 
-    die "ERROR: archive top '$mycpan' is not a directory\n"
-        unless -d $mycpan;
+    -d $mycpan
+        or die "ERROR: archive top '$mycpan' is not a directory\n";
 
-    -d "$mycpan/site" || mkdir "$mycpan/site", 0755
-        or die "ERROR: cannot create directory $mycpan/site: $!";
+    mkdirhier "$mycpan/site";
 
     my $program     = basename $0;
+    $VERSION      ||= 'undef';   # test env at home
     print "$program version $VERSION\n" if $verbose;
 
     my $details    = "$mycpan/site/02packages.details.txt.gz";
@@ -81,22 +84,6 @@ sub cpan_index($@)
 
     print "updating checksums\n" if $verbose;
     calculate_checksums $distdirs;
-
-    # Create empty 01mailrc
-    my $mailrc     = "$mycpan/site/01mailrc.txt.gz";
-    print "create empty $mailrc\n" if $verbose;
-    unless(-f $mailrc)
-    {   IO::File->new("| $gzip_write >$mailrc")
-           or die "ERROR: cannot create $mailrc: $!\n";
-    }
-
-    # Create empty 03modlist
-    my $modlist    = "$mycpan/site/03modlist.data.gz";
-    print "create empty $modlist\n" if $verbose;
-    unless(-f $modlist)
-    {   IO::File->new("| $gzip_write >$modlist")
-           or die "ERROR: cannot create $modlist: $!\n";
-    }
 }
 
 #
@@ -109,6 +96,8 @@ my ($topdir, $findpkgs, %finddirs, $olddists);
 sub package_inventory($$)
 {  (my $cpan, $olddists) = @_;
    $topdir   = "$cpan/authors/id";
+   mkdirhier $topdir;
+
    $findpkgs = {};
 
    print "creating inventory from $topdir\n" if $verbose;
@@ -121,11 +110,11 @@ sub register($$$)
 {  my ($package, $version, $dist) = @_;
    print "reg(@_)\n" if $debug;
 
-   my $registered_version = $findpkgs->{$package}[0] || '';
-
+   my $registered_version = $findpkgs->{$package}[0] || '0';
    return if exists $findpkgs->{$package}
-          && $registered_version ge $version;
+          && qv($registered_version) > qv($version);
 
+   $version =~ s/^v//;
    $findpkgs->{$package} = [ $version, $dist ];
 }
 
@@ -222,9 +211,11 @@ BLOCK:
             next;
          }
 
-         if( m/^ (?:our)? \s* \$ (?: \w+\:\:)* VERSION \s* \= \s* (.*)/x )
+         if( m/^ (?:use\s+version\s*;\s*)?
+                 (?:our)? \s* \$ (?: \w+\:\:)* VERSION \s* \= \s* (.*)/x )
          {  $version = eval "my \$v = $1";
-            print "version=$version\n" if $debug;
+            $version = $version->numify if ref $version;
+            print "version=$version\n"  if $debug;
 
             register $package, $version, $dist
                 if $file && $package && $file =~ m/\.pm$/
@@ -237,22 +228,21 @@ BLOCK:
 sub merge_core_cpan($$$)
 {   my ($cpan, $pkgs, $bigcpan_url) = @_;
 
-    print "merging table with CPAN core list\n"
+    print "merging packages with CPAN core list\n"
        if $verbose;
 
-    my $bigcpan    = "$cpan/modules";
-    my $bigdetails = "$bigcpan/02packages.details.txt.gz";
+    my $mailrc     = "$cpan/authors/01mailrc.txt.gz";
+    my $bigdetails = "$cpan/modules/02packages.details.txt.gz";
+    my $modlist    = "$cpan/modules/03modlist.data.gz";
 
-       -d $bigcpan
-    or mkdir $bigcpan
-    or die "ERROR: cannot create $bigcpan: $!\n";
+    mkdirhier "$cpan/authors", "$cpan/modules";
 
-    update_core_cpan $bigcpan_url, $bigdetails
+    update_core_cpan $bigcpan_url, $bigdetails, $modlist, $mailrc
         if ! -f $bigdetails || -M $bigdetails > $cpan_update;
 
     -f $bigdetails or return;
 
-    my $cpan_pkgs = collect_dists $bigdetails, $bigcpan, local => 0;
+    my $cpan_pkgs = collect_dists $bigdetails, "$cpan/modules", local => 0;
 
     while(my ($cpandist, $cpanpkgs) = each %$cpan_pkgs)
     {   foreach (@$cpanpkgs)
@@ -300,7 +290,7 @@ __HEADER
 sub calculate_checksums($)
 {   my $dirs = shift;
     eval "require CPAN::Checksums";
-    die $@ if $@;
+    die "ERROR: please install CPAN::Checksums\n" if $@;
 
     foreach my $dir (keys %$dirs)
     {   print "summing $dir\n" if $debug;
@@ -352,17 +342,14 @@ sub collect_dists($$@)
     \%olddists;
 }
 
-sub update_core_cpan($$)
-{  my ($archive, $destfile) = @_;
-   print "getting update of $destfile from $archive\n" if $verbose;
+sub update_core_cpan($@)
+{  my ($archive, @files) = @_;
 
    if($archive !~ m[^ftp://([^/]+)(/.*)])
    {   warn "WARNING: illegal ftp address for CPAN: $archive\n";
        return;
    }
-   my ($host, $path, $fn) = ($1, "$2/modules", basename $destfile);
-   my $full = "ftp://$host$path/$fn";
-#warn $full;
+   my ($host, $path) = ($1, $2);
 
    my $ftp = Net::FTP->new($host, Debug => 0);
    unless($ftp)
@@ -381,12 +368,34 @@ sub update_core_cpan($$)
    }
 
    $ftp->binary;
-   unless($ftp->get($fn, $destfile))
-   {   warn "WARNING: get of $full failed ", $ftp->message;
-       return;
+
+   foreach my $destfile (@files)
+   {   print "getting update of $destfile from $archive\n" if $verbose;
+
+       my $fn    = basename $destfile;
+       my $group = basename dirname $destfile;
+
+       unless($ftp->get("$group/$fn", $destfile))
+       {   my $full = "ftp://$host$path/$group/$fn";
+           warn "WARNING: get of $full failed ", $ftp->message;
+           return;
+       }
    }
 
    $ftp->close;
+}
+
+sub mkdirhier(@)
+{   foreach my $dir (@_)
+    {   next if -d $dir;
+        mkdirhier(dirname $dir);
+
+        mkdir $dir, 0755
+            or die "ERROR: cannot create directory $dir: $!";
+
+        print "created $dir\n" if $verbose;
+    }
+    1;
 }
 
 1;
