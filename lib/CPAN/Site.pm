@@ -5,9 +5,12 @@ use strict;
 package CPAN::Site;
 use base 'CPAN';
 
-my $reload_orig;
+our $reload_orig;
+our $config_loader;
 BEGIN {
   $reload_orig = \&CPAN::Index::reload;
+  eval "require CPAN::HandleConfig";
+  $config_loader = $@ ? 'CPAN::Config' : 'CPAN::HandleConfig';
 }
 
 # Add "CPAN" to the list of exported items
@@ -19,7 +22,8 @@ sub import
    goto &$import;
 }
 
-CPAN::Config->load if CPAN::Config->can('load');
+$config_loader->load
+    if $config_loader->can('load');
 
 if(my $urls = $ENV{CPANSITE})
 {   unshift @{$CPAN::Config->{urllist}}, split ' ', $urls;
