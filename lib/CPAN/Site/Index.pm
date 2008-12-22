@@ -90,8 +90,8 @@ sub cpan_index($@)
 # Package Inventory
 #
 
-# find requires global variables (sorry)
-my ($topdir, $findpkgs, %finddirs, $olddists);
+# global variables for testing purposes (sorry)
+our ($topdir, $findpkgs, %finddirs, $olddists);
 
 sub package_inventory($$)
 {  (my $cpan, $olddists) = @_;
@@ -108,13 +108,14 @@ sub package_inventory($$)
 
 sub register($$$)
 {  my ($package, $version, $dist) = @_;
-   print "reg(@_)\n" if $debug;
+   warn "reg(@_)\n" if $debug;
 
-   my $registered_version = $findpkgs->{$package}[0] || '0';
-   return if exists $findpkgs->{$package}
+   my $registered_version = $findpkgs->{$package}[0];
+   return if defined $registered_version
+          && defined $version
           && qv($registered_version) > qv($version);
 
-   $version =~ s/^v//;
+   $version =~ s/^v// if defined $version;
    $findpkgs->{$package} = [ $version, $dist ];
 }
 
@@ -131,16 +132,16 @@ sub inspect_entry
 {  my $fn   = $File::Find::name;
    return if ! -f $fn || $fn !~ $tar_gz;
 
-   print "inspecting $fn\n" if $debug;
+   warn "inspecting $fn\n" if $debug;
 
    (my $dist = $fn) =~ s!^$topdir/!!;
 
    if(exists $olddists->{$dist})
-   {  print "no change in $dist\n" if $debug;
+   {  warn "no change in $dist\n" if $debug;
 
       foreach (@{$olddists->{$dist}})
-      {   my ($pkg, $version) = @$_;
-          register $pkg, $version, $dist;
+      {  my ($pkg, $version) = @$_;
+         register $pkg, $version, $dist;
       }
       return;
    }
@@ -164,31 +165,25 @@ BLOCK:
    {
       if($in_buf =~ /^(\S*?)\0/)
       {
-          $file = $1;
-          substr($file, 0, length $dist_name) eq $dist_name
-              or next BLOCK;
+         $file = $1;
+         # when the package contains non-text files, this produces garbage
+         # warn "##### file=$file\n" if $debug;
 
-# when the package contains non-text files, this produces garbage
-#         print "file=$file\n" if $debug && length $file;
+         if($file eq $readme_file)
+         {  warn "found README in $readme_file\n" if $debug;
 
-          if($file eq $readme_file)
-          {  print "found README in $readme_file\n" if $debug;
+            my $readmefn = $dist_name. ".readme";
+            my $outputfn = File::Spec->catfile($File::Find::dir, $readmefn);
+            warn "README full path '$outputfn'\n" if $debug;
 
-#            my $outputfn = File::Spec->catfile($File::Find::dir,$readme_file);
-#            $outputfn =~ s/\bREADME$/\.readme/;
+            $readme_fh = IO::File->new($outputfn, 'w')
+                or die "Could not write to README file $outputfn: $!";
 
-             my $readmefn = $dist_name. ".readme";
-             my $outputfn = File::Spec->catfile($File::Find::dir, $readmefn);
-             print "README full path '$outputfn'\n" if $debug;
-
-             $readme_fh = IO::File->new($outputfn, 'w')
-                 or die "Could not write to README file $outputfn: $!";
-
-             warn "Creating README file: $outputfn\n" if $debug;
-          }
-          else
-          {  undef $readme_fh;
-          }
+            warn "Creating README file: $outputfn\n" if $debug;
+         }
+         else
+         {  undef $readme_fh;
+         }
 
          undef $package;
          undef $version;
@@ -203,23 +198,22 @@ BLOCK:
       while($out_buf =~ s/^([^\n]*)\n//)
       {
          local $_ = $1;
-         local $VERSION;  # destroyed by eval
+         $file && $file =~ m/\.pm$/ or next;
 
-         if( m/^\s* package \s* ((\w+\:\:)*\w+) \s* ;/x )
+         if( m/^\s* package \s* ((?:\w+\:\:)*\w+) \s* ;/x )
          {  $package = $1;
-            print "package=$package\n" if $debug;
-            next;
+            warn "package=$package\n" if $debug;
+            register $package, undef, $dist;
          }
-
-         if( m/^ (?:use\s+version\s*;\s*)?
+         elsif( m/^ (?:use\s+version\s*;\s*)?
                  (?:our)? \s* \$ (?: \w+\:\:)* VERSION \s* \= \s* (.*)/x )
-         {  $version = eval "my \$v = $1";
+         {  local $VERSION;  # destroyed by eval
+            $version = eval "my \$v = $1";
             $version = $version->numify if ref $version;
-            print "version=$version\n"  if $debug;
+            warn "version=$version\n"   if $debug;
 
             register $package, $version, $dist
-                if $file && $package && $file =~ m/\.pm$/
-                && package_on_usual_location $file;
+               if $package && package_on_usual_location $file;
          }
       }
    }
@@ -256,7 +250,7 @@ sub merge_core_cpan($$$)
 sub create_details($$$$)
 {  my ($details, $filename, $pkgs, $lazy) = @_;
 
-   print "creating package details file '$filename'\n" if $debug;
+   warn "creating package details file '$filename'\n" if $debug;
    my $fh = IO::File->new("| $gzip_write >$filename")
       or die "Generating $filename: $!\n";
 
@@ -293,7 +287,7 @@ sub calculate_checksums($)
     die "ERROR: please install CPAN::Checksums\n" if $@;
 
     foreach my $dir (keys %$dirs)
-    {   print "summing $dir\n" if $debug;
+    {   warn "summing $dir\n" if $debug;
         CPAN::Checksums::updatedir($dir)
             or warn "WARNING: failed calculating checksums in $dir\n";
     }
@@ -325,12 +319,12 @@ sub collect_dists($$@)
 
         if($check)
         {   unless( -f "$authors/$dist" )
-            {   print "removed $dist, so ignore $oldpkg\n" if $debug;
+            {   warn "removed $dist, so ignore $oldpkg\n" if $debug;
                 next PACKAGE;
             }
 
             if((stat "$authors/$dist")[9] > $time_last_update )
-            {   print "newer $dist, so ignore $oldpkg\n" if $debug;
+            {   warn "newer $dist, so ignore $oldpkg\n" if $debug;
                 next PACKAGE;
             }
         }
