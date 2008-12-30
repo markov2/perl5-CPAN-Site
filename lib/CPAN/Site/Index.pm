@@ -159,8 +159,9 @@ sub inspect_entry
    my $tarball_name = basename $dist;
    my $dist_name    = $tarball_name =~ /(.*)\.tar\.gz/ ? $1 : undef;
    my $readme_fh;
+   my $inspect_this_file   = 0;
 
-BLOCK:
+ BLOCK:
    while($fh->sysread($in_buf, 512))
    {
       if($in_buf =~ /^(\S*?)\0/)
@@ -169,6 +170,7 @@ BLOCK:
          # when the package contains non-text files, this produces garbage
          # warn "##### file=$file\n" if $debug;
 
+         $inspect_this_file = 0;
          if($file eq $readme_file)
          {  warn "found README in $readme_file\n" if $debug;
 
@@ -180,6 +182,9 @@ BLOCK:
                 or die "Could not write to README file $outputfn: $!";
 
             warn "Creating README file: $outputfn\n" if $debug;
+         }
+         elsif($file =~ m/\.pm$/ && package_on_usual_location $file)
+         {  $inspect_this_file = 1;
          }
          else
          {  undef $readme_fh;
@@ -195,10 +200,13 @@ BLOCK:
          if $readme_fh;
 
       $out_buf .= $in_buf;
+      unless($inspect_this_file)
+      {  $out_buf =~ s/^.*\n//;  # purge all whole lines
+         next BLOCK;
+      }
+
       while($out_buf =~ s/^([^\n]*)\n//)
-      {
-         local $_ = $1;
-         $file && $file =~ m/\.pm$/ or next;
+      {  local $_ = $1;          # one single line
 
          if( m/^\s* package \s* ((?:\w+\:\:)*\w+) \s* ;/x )
          {  $package = $1;
@@ -212,8 +220,7 @@ BLOCK:
             $version = $version->numify if ref $version;
             warn "version=$version\n"   if $debug;
 
-            register $package, $version, $dist
-               if $package && package_on_usual_location $file;
+            register $package, $version, $dist;
          }
       }
    }
