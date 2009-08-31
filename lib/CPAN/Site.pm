@@ -72,17 +72,21 @@ CPAN::Site - CPAN.pm subclass for adding site local modules
 
 =chapter DESCRIPTION
 
-This module adds access to site specific modules to the CPAN.pm install
-interface. The general idea is to have a local (pseudo) CPAN server which
-is asked first. If the request fails -which is the usual case-, CPAN.pm
-switches to the next URL in the list pointing to a real CPAN server.
+This module adds access to site specific modules to the C<CPAN.pm> install
+interface; it adds a set of site-specific, non-public domain modules to
+the repository of the global CPAN.
+
+The general idea is to have a local (pseudo) CPAN server which is asked
+first. If the request fails -which is the usual case, except for own
+modules-, CPAN.pm switches to the next URL in the list, which points to
+a server in the world-wide CPAN network.
 
 =chapter DETAILS
 
 =section QUICK SETUP EXAMPLE FOR IMPATIENT
 
 This explanation was contributed by Alex Efros.  There is also an
-explanation in the manual page of the cpansite script.
+extended explanation in the manual page of the C<cpansite> script.
 
 Let's say your (registered or un-registered) Pause-ID is IMPATIENT, :)
 and you have private module in file Private-Module-1.23.tar.gz. You wish
@@ -93,32 +97,38 @@ directory /var/www/impatient.net/.
 =subsection Configuring the server
 
  # cpan CPAN::Site
- # mkdir -p /var/www/impatient.net/CPAN/authors/id/I/IM/IMPATIENT/
- # cp Private-Module-1.23.tar.gz \
-        /var/www/impatient.net/CPAN/authors/id/I/IM/IMPATIENT/
- # cpansite -vl index /var/www/impatient.net/CPAN/
+ # CPANSITE=/var/www/impatient.net/CPAN
+ # USERID=I/IM/IMPATIENT
+ # PUBLISH=$CPANSITE/authors/id/$USERID
+ # mkdir -p $PUBLISH
+ # cp Private-Module-1.23.tar.gz $PUBLISH
+ # cpansite -vl index $CPANSITE
 
-This nested C</I/IM/IMPATIENT/> structure is CPAN's way of avoiding
-huge directories.  Your mirror only requires one level.
+This nested C<I/IM/IMPATIENT/> directory is CPAN's way of avoiding
+one huge directory with 5000 author names.  Your mirror only requires
+one level, but it is cleaner to follow CPAN's practice.
 
 You may also wish to add C<cpansite index> to cron and have it run every
-hour or so.  This way you can just copy new modules to
-F</var/www/impatient.net/CPAN/authors/id/I/IM/IMPATIENT/>
+hour or so.  This way you can just copy new modules to C<$PUBLISH>
 and they become automatically available on your CPAN mirror after a while.
 To do this you should run C<crontab -e> and add single line like this:
 
- 0 * * * *   cpansite -l index /var/www/impatient.net/CPAN/ &>/dev/null
+ CPANSITE=/var/www/impatient.net/CPAN
+ 0 * * * *   cpansite -l index $CPANSITE &>/dev/null
 
 =subsection Configuring the clients
 
  # cpan CPAN::Site
- # cpansite
+ # cpansite shell
  cpan> o conf urllist unshift http://impatient.net/CPAN/
  cpan> o conf commit
 
-Now clients should C<cpansite> command instead of C<cpan> to
-search, install or update modules. The C<cpan> command will use the
-real CPAN's indexes.
+Now clients should C<cpansite> command instead of C<cpan> to search,
+install or update modules. The C<cpan> command will use the real CPAN's
+indexes.
+
+After doing above once, you can copy your C<~/.cpan/CPAN/MyConfig.pm>
+file to other systems where you wish to have the same configuration.
 
 =chapter SEE ALSO
 
@@ -126,7 +136,7 @@ The C<cpansite(1)> script.
 
 =chapter AUTHOR
 
-Mark Overmeer E<lt>perl@overmeer.netE<gt>,
+Mark Overmeer E<lt>perl@overmeer.netE<gt>.
 Based on the original module by Ulrich Pfeifer E<lt>pfeifer@wait.deE<gt>.
 
 =cut
