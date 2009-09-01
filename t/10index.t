@@ -7,10 +7,18 @@ use strict;
 use strict;
 use warnings;
 use FindBin qw($Bin);
-use Test::More tests => 53;
+use Test::More;
 
-use_ok('CPAN::Site::Index')
-    || BAIL_OUT('Failed to compiled module CPAN::Site::Index');
+BEGIN {
+    eval "require CPAN::Site::Index";
+    if(!$@) { plan tests => 52 }
+    elsif($ENV{CPANSITE_ROLE} eq 'server')
+    {   die $@;
+    }
+    else
+    {   plan skip_all => 'cannot use indexer';
+    }
+}
 
 test_inspect_entry_for_distro_with_strange_data();
 test_inspect_entry_for_distro_with_packages_that_should_not_be_registered();

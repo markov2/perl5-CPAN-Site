@@ -1,4 +1,3 @@
-
 use warnings;
 use strict;
 
@@ -47,8 +46,7 @@ sub CPAN::Index::reload {
 
    $last_time = $time;
 
-#  $reload_orig->(@_);
-
+   $reload_orig->(@_);
    $cl->rd_authindex($cl->reload_x("authors/01mailrc.txt.gz", '', $force));
    $cl->rd_modpacks($cl->reload_x("site/02packages.details.txt.gz",'',$force));
    $cl->rd_modlist($cl->reload_x("modules/03modlist.data.gz", '', $force));
