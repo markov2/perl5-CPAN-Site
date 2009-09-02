@@ -2,7 +2,7 @@ ChangeLog
 MANIFEST
 Makefile.PL
 bin/cpansite
-bin/mkpackages
+explain_101.txt
 lib/CPAN/Site.pm
 lib/CPAN/Site/Index.pm
 t/10index.t
