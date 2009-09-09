@@ -44,6 +44,7 @@ sub cpan_mirror($$$@);
 
 sub safe_copy($$)
 {   my ($from, $to) = @_;
+    trace "copy $from to $to";
     copy $from, $to
         or fault __x"cannot copy {from} to {to}", from => $from, to => $to;
 }
@@ -208,13 +209,17 @@ sub collect_package_details($$)
         }
 
         if( m/^ (?:use\s+version\s*;\s*)?
-            (?:our)? \s* \$ (?: \w+\:\:)* VERSION \s* \= \s* (.*)/x )
-        {   defined $1 or next;
+            (?:our)? \s* \$ ((?: \w+\:\:)*) VERSION \s* \= \s* (.*)/x )
+        {   defined $2 or next;
+            my ($ns, $vers) = ($1, $2);
             local $VERSION;  # destroyed by eval
-            $version = eval "my \$v = $1";
+            $version = eval "my \$v = $vers";
             $version = $version->numify if ref $version;
             if(defined $version)
-            {   trace "pkg $package version $version";
+            {   ($package = $ns) =~ s/\:\:$//
+                    if length $ns;
+
+                trace "pkg $package version $version";
                 register $package, $version, $dist;
             }
         }
@@ -390,6 +395,7 @@ sub cpan_mirror($$$@)
     {   last if $line =~ m/^\s*$/;
     }
 
+    $ua ||= LWP::UserAgent->new;
     while(my $line = $fh->getline)
     {   my ($pkg, $version, $dist) = split ' ', $line;
         delete $need{$pkg} or next;
