@@ -1,4 +1,3 @@
-
 use warnings;
 use strict;
 
@@ -21,7 +20,7 @@ use Archive::Tar    ();
 use CPAN::Checksums ();
 use IO::Zlib        ();
 
-my $tar_gz      = qr/ \.tar \.(gz|Z) $/x;
+my $tar_gz      = qr/ \.tar\.gz$ | \.tar\.Z$ | \.tgz$/x;
 my $cpan_update = 0.04; # days between reload of full CPAN index
 my $ua;
 
@@ -126,11 +125,11 @@ sub register($$$)
 #      . (defined $this_version ? $this_version : 'undef');
 
    my $registered_version = $findpkgs->{$package}[0];
-   return if defined $registered_version
-          && defined $this_version
-          && qv($registered_version) > qv($this_version);
 
    $this_version =~ s/^v// if defined $this_version;
+   return if qv($registered_version) > qv($this_version);
+   # above with qv() works well, even with "undef" in the variables. See t/20qv
+
    $findpkgs->{$package} = [ $this_version, $dist ];
 }
 
@@ -181,7 +180,7 @@ sub inspect_archive
              , fn => $fn, err => $arch->error;
 
     foreach my $file ($arch->get_files)
-    {   my $fn = $file->name;
+    {   my $fn = $file->full_path;
         $file->is_file && $fn =~ m/\.pm$/i && package_on_usual_location $fn
             or next;
         collect_package_details $dist, $file;
