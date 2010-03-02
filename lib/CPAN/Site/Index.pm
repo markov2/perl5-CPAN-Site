@@ -54,6 +54,11 @@ sub cpan_index($@)
     my $fallback = $opts{fallback};
     my $undefs   = exists $opts{undefs} ? $opts{undefs} : 1;
 
+    unless($ua)
+    {   $ua = LWP::UserAgent->new;
+        $ua->env_proxy if $opts{env_proxy};
+    }
+
     -d $mycpan
         or error __x"archive top '{dir}' is not a directory"
              , dir => $mycpan;
@@ -266,7 +271,6 @@ sub update_global_cpan($$)
 
 sub load_file($$)
 {   my ($from, $to) = @_;
-    $ua ||= LWP::UserAgent->new;
     my $response = $ua->get($from, ':content_file' => $to);
     return if $response->is_success;
 
@@ -407,6 +411,11 @@ sub cpan_mirror($$$@)
     @$mods or return;
     my %need = map { ($_ => 1) } @$mods;
     my $auth = catdir $mycpan, 'authors', 'id';
+
+    unless($ua)
+    {   $ua = LWP::UserAgent->new;
+        $ua->env_proxy if $opts{env_proxy};
+    }
 
     my $globdetails
              = update_global_cpan $mycpan, $globalcpan;
