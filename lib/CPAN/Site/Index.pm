@@ -134,7 +134,9 @@ sub register($$$)
    my $registered_version = $findpkgs->{$package}[0];
 
    $this_version =~ s/^v// if defined $this_version;
-   return if qv($registered_version) > qv($this_version);
+   return if !defined $this_version;
+   return if defined $registered_version
+          && qv($registered_version) > qv($this_version);
    # above with qv() works well, even with "undef" in the variables. See t/20qv
 
    $findpkgs->{$package} = [ $this_version, $dist ];
