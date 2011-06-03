@@ -3,6 +3,18 @@
 
    *** See the CPAN6 development at http://cpan6.org
 
+version 1.07: Sat Jun  4 00:10:52 CEST 2011
+	Fixes:
+	- support  "package NAME VERSION;" syntax.
+	- do not enforce numifying versions, because it does influence the
+	  comparisons.
+	  rt.cpan.org#67829 [Alexey Melezhik]
+
+	Improvements:
+	- Pause expects the "package" keyword to be on same line as package name.
+	  This limitation is removed to cope with
+	  rt.cpan.org#68616 [Stephen R. Scaffidi]
+
 version 1.06: Tue May 18 16:50:11 CEST 2010
 	Fixes:
 	- adapt to newer version.pm, which broke interface.

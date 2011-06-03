@@ -5,12 +5,13 @@ $^W = 0;
 use strict;
 use warnings;
 use FindBin qw($Bin);
-use Test::More tests => 53;
+use Test::More tests => 60;
 
 use_ok('CPAN::Site::Index');
 
 test_inspect_archive_for_distro_with_strange_data();
 test_inspect_archive_for_distro_with_packages_that_should_not_be_registered();
+test_inspect_archive_for_distro_with_module_with_multiple_packages();
 
 exit;
 
@@ -79,6 +80,7 @@ sub _test_inspect_archive_for_distro {
         my $have_package = exists $CPAN::Site::Index::findpkgs->{$want_pkg};
         ok( $have_package, "Found package '$want_pkg' in tarball." )
             || push @missing_pkgs, $want_pkg;
+
     SKIP: {
             skip( "Didn't find '$want_pkg', no point in testing VERSION", 1 )
                 unless $have_package;
@@ -88,6 +90,7 @@ sub _test_inspect_archive_for_distro {
                 "Got expected version of $want_pkg" );
         }
     }
+
     if (@missing_pkgs) {
         diag(
             "Missing packages: @missing_pkgs\n\n",
@@ -110,4 +113,14 @@ sub _test_inspect_archive_for_distro {
         );
 
     #diag Test::More::explain($CPAN::Site::Index::findpkgs);
+}
+
+sub test_inspect_archive_for_distro_with_module_with_multiple_packages {      
+    my $distro_to_test = 'Distro-With-Multi-Package-Module.tar.gz';           
+    my %want_packages  = (                                                    
+        'Module::MultiPackage' => '0.01',                                     
+        'Module::MultiPackage::SubPackageOne' => '0.011',                     
+        'Module::MultiPackage::SubPackageTwo' => '0.012',                     
+    );                                                                        
+    _test_inspect_archive_for_distro( $distro_to_test, \%want_packages );     
 }

@@ -125,42 +125,47 @@ sub cpan_index($@)
 our ($topdir, $findpkgs, %finddirs, $olddists, $index_age);
 
 sub register($$$)
-{  my ($package, $this_version, $dist) = @_;
+{   my ($package, $this_version, $dist) = @_;
 
-# disabled: too verbose, even for for trace
-#  trace "register $package, "
-#      . (defined $this_version ? $this_version : 'undef');
+    # warn "register $package, " . (defined $this_version ? $this_version : 'undef');
 
-   my $registered_version = $findpkgs->{$package}[0];
+    if(ref $this_version)
+    {   eval { $this_version = version->parse($this_version) };
+        if($@)
+        {   alert __x"error when creating version object for {pkg}: {err}"
+               , pkg => $package, err => $@;
+            return;
+        }
+    }
+      
+    my $registered_version = exists $findpkgs->{$package} ? $findpkgs->{$package}[0] : undef;
+    $this_version =~ s/^v// if $this_version;
 
-   $this_version =~ s/^v// if defined $this_version;
-   return if !defined $this_version;
-   return if defined $registered_version
-          && qv($registered_version) > qv($this_version);
-   # above with qv() works well, even with "undef" in the variables. See t/20qv
+    return if defined $registered_version
+           && $registered_version > $this_version;
 
-   $findpkgs->{$package} = [ $this_version, $dist ];
+    $findpkgs->{$package} = [ $this_version, $dist ];
 }
 
 sub package_inventory($$;$)
-{  (my $mycpan, $olddists, $index_age) = @_;   #!!! see "my"
-   $topdir   = catdir $mycpan, 'authors', 'id';
-   mkdirhier $topdir;
+{   (my $mycpan, $olddists, $index_age) = @_;   #!!! see "my"
+    $topdir   = catdir $mycpan, 'authors', 'id';
+    mkdirhier $topdir;
 
-   $findpkgs = {};
-   trace "creating inventory from $topdir";
+    $findpkgs = {};
+    trace "creating inventory from $topdir";
 
-   find {wanted => \&inspect_archive, no_chdir => 1}, $topdir;
-   ($findpkgs, \%finddirs);
+    find {wanted => \&inspect_archive, no_chdir => 1}, $topdir;
+    ($findpkgs, \%finddirs);
 }
 
 sub package_on_usual_location($)
-{  my $file  = shift;
-   my ($top, $subdir, @rest) = splitdir $file;
-   defined $subdir or return 0;
+{   my $file  = shift;
+    my ($top, $subdir, @rest) = splitdir $file;
+    defined $subdir or return 0;
 
-      !@rest             # path is at top-level of distro
-   || $subdir eq 'lib';  # inside lib
+       !@rest             # path is at top-level of distro
+    || $subdir eq 'lib';  # inside lib
 }
 
 sub inspect_archive
@@ -208,24 +213,25 @@ sub collect_package_details($$)
     my $package;
     local $VERSION = undef;  # may get destroyed by eval
 
-    foreach (@lines)
-    {   last if m/^__(?:END|DATA)__$/;
+    while(@lines)
+    {   local $_ = shift @lines;
+        last if m/^__(?:END|DATA)__$/;
 
         $in_pod = ($1 ne 'cut') if m/^=(\w+)/;
-        next if $in_pod;
+        next if $in_pod || m/^\s*#/;
 
-        if( m/^\s* package \s* ((?:\w+\:\:)*\w+) \s* ;/x )
+        $_ .= shift @lines
+            while m/package|use|VERSION/ && !m/\;/;
+
+        if( m/^\s* package \s* ((?:\w+\:\:)*\w+) (?:\s+ (\S*))? \s* ;/x )
         {   # second package in file?
-            if(defined $package)
-            {   my $nextpkg = $1;
-                register $package, $VERSION, $dist;
-                undef $VERSION;
-                $package = $nextpkg;
-            }
-            else
-            {   $package = $1;
-            }
+            my $thispkg     = $1;
+            my $thisversion = $2 ? qv($2) : undef;
 
+            register $package, $VERSION, $dist
+                if defined $package;
+
+            ($package, $VERSION) = ($thispkg, $thisversion);
             trace "pkg $package from ".$file->name;
         }
 
