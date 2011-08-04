@@ -12,19 +12,20 @@ if(!$@ && $CPAN::Site::VERSION <= 1.01 && !$ENV{MARKOV_DEVEL})
 *** please re-read the documentation.
 
 __WARN
-    sleep 5
+    sleep 3
 }
 
 WriteMakefile
  ( NAME       => 'CPAN::Site'
  , ABSTRACT   => 'adding site local modules'
- , VERSION    => '1.08'
+ , VERSION    => '1.09'
 
  , EXE_FILES  => [ 'bin/cpansite' ]
 
  , AUTHOR     => 'Mark Overmeer'
  , PREREQ_PM  =>
    { Archive::Tar       => 1.00
+   , Archive::Zip       => 0
    , CPAN::Checksums    => 0
    , Getopt::Long       => 0
    , HTTP::Date         => 0

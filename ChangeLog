@@ -3,6 +3,11 @@
 
    *** See the CPAN6 development at http://cpan6.org
 
+version 1.09: Thu Aug  4 10:22:57 CEST 2011
+	Improvements:
+	- support zip files.
+	  requested by rt.cpan.org#69692 [Bartosz Jakubski]
+
 version 1.08: Mon Jun 20 16:45:43 CEST 2011
 	Improvements:
 	- handle errors found by qv() while parsing version strings

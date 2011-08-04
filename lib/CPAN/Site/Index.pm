@@ -17,10 +17,12 @@ use HTTP::Date      qw/time2str/;
 use File::Spec::Functions qw/catfile catdir splitdir/;
 use LWP::UserAgent  ();
 use Archive::Tar    ();
+use Archive::Zip    qw(:ERROR_CODES :CONSTANTS);
 use CPAN::Checksums ();
 use IO::Zlib        ();
 
-my $tar_gz      = qr/ \.tar\.gz$ | \.tar\.Z$ | \.tgz$/x;
+my $tar_gz      = qr/ \.tar\.gz$ | \.tar\.Z$ | \.tgz$/xi;
+my $zip         = qr/ \.zip$ /xi;
 my $cpan_update = 0.04; # days between reload of full CPAN index
 my $ua;
 
@@ -30,7 +32,9 @@ sub register($$$);
 sub package_inventory($$;$);
 sub package_on_usual_location($);
 sub inspect_archive;
-sub collect_package_details($$);
+sub inspect_tar_archive($$);
+sub inspect_zip_archive($$);
+sub collect_package_details($$$);
 sub update_global_cpan($$);
 sub load_file($$);
 sub merge_global_cpan($$$);
@@ -169,11 +173,12 @@ sub package_on_usual_location($)
 }
 
 sub inspect_archive
-{   my $fn   = $File::Find::name;
-    -f $fn && $fn =~ $tar_gz
-        or return;
+{   my $fn = $File::Find::name;
+    return unless -f $fn
+               && ($fn =~ $tar_gz || $fn =~ $zip);
 
     (my $dist = $fn) =~ s!^$topdir[\\/]!!;
+
     if(defined $index_age && -M $fn > $index_age)
     {
         unless(exists $olddists->{$dist})
@@ -192,23 +197,52 @@ sub inspect_archive
     trace "inspecting archive $fn";
     $finddirs{$File::Find::dir}++;
 
+    return inspect_tar_archive $dist, $fn
+        if $fn =~ $tar_gz;
+
+    return inspect_zip_archive $dist, $fn
+        if $fn =~ $zip;
+}
+
+sub inspect_tar_archive($$)
+{   my ($dist, $fn) = @_;
+
     my $arch =  Archive::Tar->new;
     $arch->read($fn, 1)
-        or error __x"no files in archive '{fn}': {err}"
+        or error __x"no files in tar archive '{fn}': {err}"
              , fn => $fn, err => $arch->error;
 
     foreach my $file ($arch->get_files)
     {   my $fn = $file->full_path;
         $file->is_file && $fn =~ m/\.pm$/i && package_on_usual_location $fn
             or next;
-        collect_package_details $dist, $file;
+        collect_package_details $fn, $dist, $file->get_content_by_ref;
     }
 }
 
-sub collect_package_details($$)
-{   my ($dist, $file) = @_;
+sub inspect_zip_archive($$)
+{   my ($dist, $fn) = @_;
 
-    my @lines  = split /\r?\n/, ${$file->get_content_by_ref};
+    my $arch =  Archive::Zip->new;
+    $arch->read($fn)==AZ_OK
+        or error __x"no files in zip archive '{fn}': {err}"
+             , fn => $fn, err => $arch->error;
+
+    foreach my $member ($arch->membersMatching( qr/\.pm$/i ))
+    {   my $fn = $member->fileName;
+        $member->isTextFile && package_on_usual_location $fn
+            or next;
+        my ($contents, $status) = $member->contents;
+        $status==AZ_OK
+            or error "error in zip file {fn}: {err}"
+               , fn => $fn, err => $status;
+        collect_package_details $fn, $dist, \$contents;
+    }
+}
+
+sub collect_package_details($$$)
+{   my ($fn, $dist) = (shift, shift);
+    my @lines  = split /\r?\n/, ${shift()};
     my $in_pod = 0;
     my $package;
     local $VERSION = undef;  # may get destroyed by eval
@@ -237,7 +271,7 @@ sub collect_package_details($$)
                 if defined $package;
 
             ($package, $VERSION) = ($thispkg, $thisversion);
-            trace "pkg $package from ".$file->name;
+            trace "pkg $package from $fn";
         }
 
         if( m/^ (?:use\s+version\s*;\s*)?
