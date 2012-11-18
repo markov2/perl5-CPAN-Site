@@ -177,7 +177,7 @@ sub inspect_archive
     return unless -f $fn
                && ($fn =~ $tar_gz || $fn =~ $zip);
 
-    (my $dist = $fn) =~ s!^$topdir[\\/]!!;
+    (my $dist = $fn) =~ s!^\Q$topdir\E[\\/]!!;
 
     if(defined $index_age && -M $fn > $index_age)
     {

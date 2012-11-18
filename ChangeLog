@@ -3,6 +3,10 @@
 
    *** See the CPAN6 development at http://cpan6.org
 
+version 1.11: Sun Nov 18 22:11:21 CET 2012
+	- minor patch for Windows
+	  rt.cpan.org#81202 [Anthony Lucas]
+
 version 1.10: Sun Feb 12 22:26:22 CET 2012
 	- Fix bad change in 1.08, good version comparison.
 	  rt.cpan.org#72243 [Alexey Melezhik]
