@@ -255,7 +255,7 @@ sub collect_package_details($$$)
         next if $in_pod || m/^\s*#/;
 
         $_ .= shift @lines
-            while m/package|use|VERSION/ && !m/\;/;
+            while @lines && m/package|use|VERSION/ && !m/\;/;
 
         if( m/^\s* package \s* ((?:\w+\:\:)*\w+) (?:\s+ (\S*))? \s* ;/x )
         {   my ($thispkg, $v) = ($1, $2);

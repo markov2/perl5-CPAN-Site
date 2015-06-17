@@ -18,7 +18,7 @@ __WARN
 WriteMakefile
  ( NAME       => 'CPAN::Site'
  , ABSTRACT   => 'adding site local modules'
- , VERSION    => '1.11'
+ , VERSION    => '1.12'
 
  , EXE_FILES  => [ 'bin/cpansite' ]
 
@@ -33,7 +33,6 @@ WriteMakefile
    , Log::Report        => 0.25
    , LWP                => 0
    , Test::More         => 0.82
-   , Test::Pod          => 1.00
    , version            => 0.76
    }
  , LICENSE    => 'perl'

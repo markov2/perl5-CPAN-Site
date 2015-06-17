@@ -1,7 +1,16 @@
 
 === version history for CPAN::Site
 
-   *** See the CPAN6 development at http://cpan6.org
+version 1.12: Wed Jun 17 10:16:10 CEST 2015
+
+	Fixes:
+	- stalled indexing on broken package
+	  rt.cpan.org#100843 [Jason McCarver]
+
+	Improvements:
+	- move t/99pod.t to xt/ and remove dependency on Test::Pod
+	- add warning that only pm files get indexed, not scripts
+	  [Thorsten Huhn]
 
 version 1.11: Sun Nov 18 22:11:21 CET 2012
 	- minor patch for Windows

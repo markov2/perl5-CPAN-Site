@@ -146,6 +146,7 @@ Produce verbose output via L<Log::Report>.
 The location of your local CPAN archive set-up.
 
 Example:
+
   export CPANSITE_LOCAL="/www/websites/cpan.example.com"
   cpansite index
 
@@ -279,6 +280,11 @@ The files F<$MYCPAN/authors/01mailrc.txt.gz> and
 F<$MYCPAN/modules/03modlist.data.gz> are downloaded from CPAN.  This
 will reduce the number of failing retreivals when you start installing
 software.
+
+B<Be warned:> the indexing scans the archive for the same VERSION
+patterns as pause does: do not make too complex expressions in
+those program lines. Only pm files are indexed, not other files,
+like scripts (pl files).
 
 =head3 Generating an index without fallback
 
