@@ -73,14 +73,15 @@ sub cpan_index($@)
 
     my $global      = catdir $mycpan, 'global';
     my $mods        = catdir $mycpan, 'modules';
-    mkdirhier $global, $mods;
+    my $authors     = catdir $mycpan, 'authors';
+    mkdirhier $global, $mods, $authors;
 
     my $globdetails = update_global_cpan $mycpan, $globalcpan;
 
     # Create mailrc and modlist
 
     safe_copy catfile($global, '01mailrc.txt.gz')
-            , catfile($mycpan, authors => '01mailrc.txt.gz');
+            , catfile($authors, '01mailrc.txt.gz');
 
     safe_copy catfile($global, '03modlist.data.gz')
             , catfile($mods, '03modlist.data.gz');

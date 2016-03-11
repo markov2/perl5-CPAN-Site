@@ -1,6 +1,12 @@
 
 === version history for CPAN::Site
 
+version 1.13: Fri 11 Mar 15:14:35 CET 2016
+
+	Fixes:
+	- auto-create $mycpan/authors
+	  rt.cpan.org#110331 [Martin Thurn]
+
 version 1.12: Wed Jun 17 10:16:10 CEST 2015
 
 	Fixes:
