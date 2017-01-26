@@ -1,6 +1,11 @@
 
 === version history for CPAN::Site
 
+version 1.14: Thu 26 Jan 12:57:46 CET 2017
+
+	Fixes:
+	- accept package {} syntax [Heike Jansen]
+
 version 1.13: Fri 11 Mar 15:14:35 CET 2016
 
 	Fixes:

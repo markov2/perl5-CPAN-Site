@@ -256,9 +256,9 @@ sub collect_package_details($$$)
         next if $in_pod || m/^\s*#/;
 
         $_ .= shift @lines
-            while @lines && m/package|use|VERSION/ && !m/\;/;
+            while @lines && m/package|use|VERSION/ && !m/[;{]/;
 
-        if( m/^\s* package \s* ((?:\w+\:\:)*\w+) (?:\s+ (\S*))? \s* ;/x )
+        if( m/^\s* package \s* ((?:\w+\:\:)*\w+) (?:\s+ (\S*))? \s* [;{]/x )
         {   my ($thispkg, $v) = ($1, $2);
             my $thisversion;
             if($v)
@@ -275,7 +275,11 @@ sub collect_package_details($$$)
             trace "pkg $package from $fn";
         }
 
-        if( m/^ (?:use\s+version\s*;\s*)?
+        if( m/^\s* \$ ${package}::VERSION \s* = \s* ["']?(\w+?)["']? \s* ;/x )
+        {   $VERSION = $1;
+        }
+
+        if( !$VERSION && m/^ (?:use\s+version\s*;\s*)?
             (?:our)? \s* \$ ((?: \w+\:\:)*) VERSION \s* \= (.*)/x )
         {   defined $2 or next;
             my ($ns, $vers) = ($1, $2);
