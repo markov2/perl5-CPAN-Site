@@ -1,8 +1,11 @@
-use warnings;
-use strict;
+# This code is part of distribution CPAN::Site.
+# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package CPAN::Site::Index;
 use base 'Exporter';
+
+use warnings;
+use strict;
 
 our @EXPORT_OK = qw/cpan_index cpan_mirror/;
 our $VERSION;  # required in test-env
@@ -175,8 +178,7 @@ sub package_on_usual_location($)
 
 sub inspect_archive
 {   my $fn = $File::Find::name;
-    return unless -f $fn
-               && ($fn =~ $tar_gz || $fn =~ $zip);
+    return unless -f $fn && ($fn =~ $tar_gz || $fn =~ $zip);
 
     (my $dist = $fn) =~ s!^\Q$topdir\E[\\/]!!;
 
