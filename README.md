@@ -9,19 +9,7 @@
 Read the manual of the cpansite script, which is part of this distribution,
 and automatically installed.
 
-## Development &rarr; Release
-
-Important to know, is that I use an extension on POD to write the manuals.
-The "raw" unprocessed version is visible on GitHub.  It will run without
-problems, but does not contain manual-pages.
-
-Releases to CPAN are different: "raw" documentation gets removed from
-the code and translated into real POD and clean HTML.  This reformatting
-is implemented with the OODoc distribution (A name I chose before OpenOffice
-existed, sorry for the confusion)
-
-Clone from github for the "raw" version.  For instance, when you want
-to contribute a new feature.
+## Installing
 
 On github, you can find the processed version for each release.  But the
 better source is CPAN; to get it installed simply run:
