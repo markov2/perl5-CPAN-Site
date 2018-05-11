@@ -375,7 +375,7 @@ Last-Updated: $date
 
 __HEADER
 
-   foreach my $pkg (sort keys %$pkgs)
+   foreach my $pkg (sort { "\L$a" cmp "\L$b" } keys %$pkgs)
    {  my ($version, $path) = @{$pkgs->{$pkg}};
 
       $version = 'undef'
