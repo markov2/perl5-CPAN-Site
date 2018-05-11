@@ -35,7 +35,7 @@ WriteMakefile
    , Test::More         => 0.82
    , version            => 0.76
    }
- , LICENSE    => 'perl'
+ , LICENSE    => 'perl_5'
 
   , META_MERGE =>
       { 'meta-spec' => { version => 2 }
@@ -45,6 +45,8 @@ WriteMakefile
               , url  => 'https://github.com/markov2/perl5-CPAN-Site.git'
               , web  => 'https://github.com/markov2/perl5-CPAN-Site'
               }
+          , homepage => 'http://perl.overmeer.net/CPAN/'
+          , license  => [ 'http://dev.perl.org/licenses/' ]
           }
       }
  );

@@ -1,7 +1,7 @@
 # CPAN::Site
 
   * My extended documentation: <http://perl.overmeer.net/CPAN/>
-  * Development via GitHub: <https://github.com/markov2/perl-CPAN-Site>
+  * Development via GitHub: <https://github.com/markov2/perl5-CPAN-Site>
   * Download from CPAN: <ftp://ftp.cpan.org/pub/CPAN/authors/id/M/MA/MARKOV/>
   * Indexed from CPAN: <http://search.cpan.org/~markov/CPAN-Site/>
     and <https://metacpan.org/release/CPAN-Site>
