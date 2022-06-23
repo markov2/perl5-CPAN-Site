@@ -24,16 +24,17 @@ WriteMakefile
 
  , AUTHOR     => 'Mark Overmeer'
  , PREREQ_PM  =>
-   { Archive::Tar       => 1.00
-   , Archive::Zip       => 0
-   , CPAN::Checksums    => 0
-   , Getopt::Long       => 0
-   , HTTP::Date         => 0
-   , IO::Zlib           => 0
-   , Log::Report        => 0.25
-   , LWP                => 0
-   , Test::More         => 0.82
-   , version            => 0.76
+   { Archive::Tar        => 1.00
+   , Archive::Zip        => 0
+   , CPAN::Checksums     => 0
+   , Getopt::Long        => 0
+   , HTTP::Date          => 0
+   , IO::Zlib            => 0
+   , Log::Report         => 0.25
+   , LWP                 => 0
+   , Test::More          => 0.82
+   , Test::TempDir::Tiny => 0.018
+   , version             => 0.76
    }
  , LICENSE    => 'perl_5'
 

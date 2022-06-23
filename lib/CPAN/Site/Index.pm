@@ -42,7 +42,7 @@ sub update_global_cpan($$);
 sub load_file($$);
 sub merge_global_cpan($$$);
 sub create_details($$$$$);
-sub calculate_checksums($);
+sub calculate_checksums($$);
 sub read_details($);
 sub remove_expired_details($$$);
 sub mkdirhier(@);
@@ -122,7 +122,7 @@ sub cpan_index($@)
                  , from => $newlist, to => $details;
     }
 
-    calculate_checksums $distdirs;
+    calculate_checksums $distdirs, catdir($mycpan, 'authors', 'id');
 }
 
 #
@@ -389,13 +389,14 @@ __HEADER
    }
 }
 
-sub calculate_checksums($)
+sub calculate_checksums($$)
 {   my $dirs = shift;
+    my $root = shift;
     trace "updating checksums";
 
     foreach my $dir (keys %$dirs)
     {   trace "summing $dir";
-        CPAN::Checksums::updatedir($dir)
+        CPAN::Checksums::updatedir($dir, $root)
             or warning 'failed calculating checksums in {dir}', dir => $dir;
     }
 }
