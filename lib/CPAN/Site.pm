@@ -3,6 +3,8 @@ use strict;
 
 package CPAN::Site;
 
+our $VERSION = '1.17';
+
 =head1 NAME
 
 CPAN::Site - extend CPAN with private packages
