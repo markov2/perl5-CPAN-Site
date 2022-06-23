@@ -1,7 +1,7 @@
 
 === version history for CPAN::Site
 
-version 1.16:
+version 1.16: Thu 23 Jun 10:57:25 CEST 2022
 
 	Improvements:
 	- this module does not use OODoc for manuals.  Remove that from the
