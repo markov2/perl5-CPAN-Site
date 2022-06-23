@@ -21,7 +21,7 @@ use File::Spec::Functions qw/catfile catdir splitdir/;
 use LWP::UserAgent  ();
 use Archive::Tar    ();
 use Archive::Zip    qw(:ERROR_CODES :CONSTANTS);
-use CPAN::Checksums ();
+use CPAN::Checksums qw(updatedir);  # horrible function name
 use IO::Zlib        ();
 
 my $tar_gz      = qr/ \.tar\.gz$ | \.tar\.Z$ | \.tgz$/xi;
@@ -396,7 +396,7 @@ sub calculate_checksums($$)
 
     foreach my $dir (keys %$dirs)
     {   trace "summing $dir";
-        CPAN::Checksums::updatedir($dir, $root)
+        updatedir($dir, $root)
             or warning 'failed calculating checksums in {dir}', dir => $dir;
     }
 }

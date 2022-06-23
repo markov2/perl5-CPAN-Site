@@ -26,7 +26,7 @@ WriteMakefile
  , PREREQ_PM  =>
    { Archive::Tar        => 1.00
    , Archive::Zip        => 0
-   , CPAN::Checksums     => 0
+   , CPAN::Checksums     => 2.14
    , Getopt::Long        => 0
    , HTTP::Date          => 0
    , IO::Zlib            => 0
