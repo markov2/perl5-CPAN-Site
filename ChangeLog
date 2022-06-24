@@ -3,6 +3,9 @@
 
 version 1.17:
 
+	Improvements:
+	- put $VERSION in CPAN::Site
+
 version 1.16: Thu 23 Jun 10:57:25 CEST 2022
 
 	Improvements:
