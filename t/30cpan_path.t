@@ -4,7 +4,15 @@
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More;
+
+# This tests attempts to load the maintainers file from cpan,
+# which is blocked by cpantesters... which makes all its nice
+# regression tests fail.
+plan skip_all => "Running in cpantesters"
+    if $ENV{NO_NETWORK_TESTING};
+
+plan tests => 4;
 
 use FindBin               qw($Bin);
 use Test::TempDir::Tiny   qw(tempdir);
