@@ -3,7 +3,7 @@ use strict;
 
 package CPAN::Site;
 
-our $VERSION = '1.17';
+our $VERSION = '1.18';
 
 =head1 NAME
 
